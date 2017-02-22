@@ -91,9 +91,9 @@ if (!$subscriptionID) {
 
 # Destination VM Size
 if ($newVmSize -eq $true) {
-    $vmsize = (Get-AzureRoleSize | where SupportedByVirtualMachines -eq $true | select InstanceSize | Out-GridView -PassThru).instancesize
+    $vmSize = (Get-AzureRoleSize | where SupportedByVirtualMachines -eq $true | select InstanceSize | Out-GridView -PassThru).instancesize
     }
-    Else {$vmsize = (Get-AzureRmVM -wa Ignore -InformationAction Ignore | where {$_.name -eq $sourceVmName}).HardwareProfile.VmSize
+    Else {$vmSize = (Get-AzureRmVM -wa Ignore -InformationAction Ignore | where {$_.name -eq $sourceVmName}).HardwareProfile.VmSize
     }
         
 
@@ -153,7 +153,7 @@ if(!$dstResourceGroup){
 $randomNumber = 1..9
 # You can change randomNumber to whatever value you want to add to the end of all resources
 $randomNumber = (-join (get-random $randomNumber -count 3))
-$saArray = @(); $uparray = @()
+$saArray = @(); $upArray = @()
 foreach ($sa in ($sourceDataDisks + $sourceOSDisks)) {$saArray +=@(($sa.split('//')[2]).split('.')[0])}
 $saArray = $saArray | select -Unique
 $saArray | % {$upArray +=, @($_,($_ + $randomNumber ))}
@@ -182,7 +182,7 @@ if (!(Get-AzureRmStorageAccount -ResourceGroupName $destinationResourceGroup -Na
 # Create Container if it doesnt exist
 foreach ($vhdFolder in ($sourceDataDisks + $sourceOSDisks)) {
     $vhdContainer = $vhdFolder.split('//')[3]
-    $vhdContainerSa = ($Vhdfolder.split('//')[2]).split('.')[0]
+    $vhdContainerSa = ($VhdFolder.split('//')[2]).split('.')[0]
     $azureRmStorageAccount = (Get-AzureRmStorageAccount -ResourceGroupName $destinationResourceGroup -Name $($vhdContainerSa + $randomNumber) -wa Ignore -InformationAction Ignore | Get-AzureStorageContainer -ea SilentlyContinue -wa Ignore -InformationAction Ignore)
     if (($azureRmStorageAccount | where {$_.name -eq $vhdContainer}).count -eq 1) {} 
         else {
@@ -235,15 +235,15 @@ $intId = (Get-AzureRmVM -ResourceGroupName $sourceResourceGroup -Name $sourceVmN
 $intId | % {
     $nicInfo = (Get-AzureRmNetworkInterface -ResourceGroupName $sourceResourceGroup -Name $($_.id.Split("/") | select -Last 1) -ea SilentlyContinue -wa SilentlyContinue)
     $nsgId = $nicInfo.NetworkSecurityGroup.Id
-    $nsg = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $sourceresourcegroup -Name $($nsgid.split("/") | select -last 1) -ea SilentlyContinue -wa SilentlyContinue
-    $newnsg = New-AzureRmNetworkSecurityGroup -ResourceGroupName $destinationResourceGroup -Name $nsg.Name -SecurityRules $nsg.SecurityRules -location $resourceGroupLocation -ea SilentlyContinue -wa SilentlyContinue -InformationAction Ignore
+    $nsg = Get-AzureRmNetworkSecurityGroup -ResourceGroupName $sourceresourcegroup -Name $($nsgId.split("/") | select -last 1) -ea SilentlyContinue -wa SilentlyContinue
+    $newNsg = New-AzureRmNetworkSecurityGroup -ResourceGroupName $destinationResourceGroup -Name $nsg.Name -SecurityRules $nsg.SecurityRules -location $resourceGroupLocation -ea SilentlyContinue -wa SilentlyContinue -InformationAction Ignore
     }
 
 # Creates vmconfig and sets size
 $VirtualMachine = New-AzureRmVMConfig -VMName $destinationVmName -VMSize $VMSize
 
 # Create a public ip and Network Interface and Attaches the Public IP
-$pubIp = (Get-AzureRmVM -ResourceGroupName $sourceresourcegroup -Name $sourceVmName -ea SilentlyContinue -wa Ignore -InformationAction Ignore).NetworkProfile.NetworkInterfaces
+$pubIp = (Get-AzureRmVM -ResourceGroupName $sourceResourceGroup -Name $sourceVmName -ea SilentlyContinue -wa Ignore -InformationAction Ignore).NetworkProfile.NetworkInterfaces
 $pubIp | % {
     $pubName = $($destinationVmName + $randomNumber)
     $pip=New-AzureRmPublicIpAddress -Name $pubName -ResourceGroupName $destinationResourceGroup -Location $resourceGroupLocation -AllocationMethod Dynamic -wa Ignore -InformationAction Ignore
