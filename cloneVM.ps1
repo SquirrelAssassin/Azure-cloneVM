@@ -107,9 +107,9 @@ if (!$destinationResourceGroup) {
 # Gather Source Info
 $sourceResourceGroup = (Get-AzureRmVM -ea SilentlyContinue -wa Ignore -InformationAction Ignore | where {$_.name -eq $sourceVmName}).ResourceGroupName
 $sourcevhdOSName = (Get-AzureRmVM -InformationAction Ignore -wa Ignore | where {$_.name -eq $sourceVmName} -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.OsDisk
-$sourceDataDisks = (get-azurermvm -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.DataDisks.vhd.uri
-$sourceDataDisksProperties = (get-azurermvm -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.DataDisks
-$sourceOSDisks = (get-azurermvm -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.OSDisk.vhd.uri
+$sourceDataDisks = (Get-AzureRmVM -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.DataDisks.vhd.uri
+$sourceDataDisksProperties = (Get-AzureRmVM -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.DataDisks
+$sourceOSDisks = (Get-AzureRmVM -name $sourceVmName -ResourceGroupName $sourceResourceGroup -ea SilentlyContinue -wa Ignore -InformationAction Ignore).StorageProfile.OSDisk.vhd.uri
 
 # Deallocat Old VM
 if ($powerdownsource -eq $true) {
@@ -126,7 +126,7 @@ if ($powerdownsource -eq $true) {
         }
 
 if ($continue -eq "yes") {
-    Write-host "Please wait while the VM is deallocated"; stop-azurermvm -Name $sourceVmName -ResourceGroupName $sourceResourceGroup -force -wa Ignore -InformationAction Ignore
+    Write-host "Please wait while the VM is deallocated"; Stop-AzureRmVM -Name $sourceVmName -ResourceGroupName $sourceResourceGroup -force -wa Ignore -InformationAction Ignore
     }
     elseif ($continue -eq "no") {exit}
 
@@ -152,7 +152,7 @@ if(!$dstResourceGroup){
 # Create Storage Account if it doesnt exist
 $randomNumber = 1..9
 # You can change randomNumber to whatever value you want to add to the end of all resources
-$randomNumber = (-join (get-random $randomNumber -count 3))
+$randomNumber = (-join (Get-Random $randomNumber -count 3))
 $saArray = @(); $upArray = @()
 foreach ($sa in ($sourceDataDisks + $sourceOSDisks)) {$saArray +=@(($sa.split('//')[2]).split('.')[0])}
 $saArray = $saArray | select -Unique
@@ -263,7 +263,7 @@ $sourceDataDisksProperties | % {
 
 # Wait For Drives to Finish Copying
 $diskArray | % {
-    write-host "Please wait for drives to finish copying."
+    Write-Host "Please wait for drives to finish copying."
     Get-AzureStorageBlobCopyState -Context $_.context -Blob $_[1] -Container $_[2] -wa SilentlyContinue -InformationAction Ignore -WaitForComplete
     }
 
