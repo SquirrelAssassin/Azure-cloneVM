@@ -146,6 +146,10 @@ if(!$dstResourceGroup){
     }
     Else{
         Write-Host "Using existing resource group $destinationResourceGroup"
+        # ISSUE 
+        # Need to capture the location of the named (passed by parameter) destination resource group if it already exists
+        # Otherwise, create the new storage account will fail
+        $resourceGroupLocation = $dstResourceGroup.Location
         }
 
 
